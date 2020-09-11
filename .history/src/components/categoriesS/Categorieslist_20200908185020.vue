@@ -1,0 +1,155 @@
+<template>
+  <div>
+    <div>
+      <zk-table
+        ref="table"
+        :data="categories.slice((pagenum-1)*pagesize,pagenum*pagesize)"
+        :columns="columns"
+        :stripe="props.stripe"
+        :border="props.border"
+        :show-header="props.showHeader"
+        :show-summary="props.showSummary"
+        :show-row-hover="props.showRowHover"
+        :show-index="props.showIndex"
+        :tree-type="props.treeType"
+        :is-fold="props.isFold"
+        :expand-type="props.expandType"
+        :selection-type="props.selectionType"
+        sum-text="sum"
+        index-text="#"
+      >
+        <template slot="sort" scope="$expand">
+          <el-tag v-if="$expand.row.cat_level===0">一级</el-tag>
+          <el-tag type="success" v-if="$expand.row.cat_level===1">二级</el-tag>
+          <el-tag type="info" v-if="$expand.row.cat_level===2">三级</el-tag>
+        </template>
+        <template slot="Effective" scope="$expand">
+          <i v-if="$expand.row.cat_deleted===false" class="el-icon-success"></i>
+          <i v-if="$expand.row.cat_deleted===true" class="el-icon-close"></i>
+        </template>
+        <template slot="operation" scope="$expand">
+          <el-button
+            v-if="$expand"
+            icon="el-icon-edit"
+            type="primary"
+            size="mini"
+            @click="gotoEdit($expand.row)"
+          >编辑</el-button>
+          <el-button
+            v-if="$expand"
+            icon="el-icon-delete"
+            type="warning"
+            size="mini"
+            @click="gotoDel($expand.row)"
+          >删除</el-button>
+        </template>
+      </zk-table>
+    </div>
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="pagenum"
+      :page-sizes="[10, 20, 30, 40]"
+      :page-size="pagesize"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+    ></el-pagination>
+  </div>
+</template>
+
+<script>
+// //如果vuex有提交mutations,固定写法
+import { createNamespacedHelpers } from "vuex";
+const goodsModule = createNamespacedHelpers("goods"); //user是模块名（store/index/modules/user）
+const { mapState: goodsState, mapActions: goodsActions } = goodsModule;
+export default {
+  name: "",
+  props: {},
+  components: {},
+  data() {
+    return {
+      type: 3,
+      pagenum: 1,
+      pagesize: 8,
+      props: {
+        stripe: false,
+        border: true,
+        showHeader: true,
+        showSummary: false,
+        showRowHover: true,
+        showIndex: true,
+        treeType: true,
+        isFold: true,
+        expandType: false,
+        selectionType: false,
+      },
+      columns: [
+        {
+          label: "分类名称",
+          prop: "cat_name",
+          width: "200px",
+          align: "center",
+          headerAlign: "center",
+        },
+        {
+          label: "是否有效",
+          type: "template",
+          width: "200px",
+          prop: "cat_deleted",
+          template: "Effective",
+          align: "center",
+          headerAlign: "center",
+        },
+        {
+          label: "排序",
+          width: "200px",
+          prop: "cat_level",
+          type: "template",
+          template: "sort",
+          align: "center",
+          headerAlign: "center",
+        },
+        {
+          label: "操作",
+          width: "200px",
+          type: "template",
+          template: "operation",
+          align: "center",
+          headerAlign: "center",
+        },
+      ],
+    };
+  },
+  methods: {
+    //展开vuex的请求
+    ...goodsActions(["getCategories"]),
+    //
+    gotoEdit(row) {
+      console.log(row);
+    },
+    handleSizeChange(val) {
+      console.log(`每页 ${val} 条`);
+      this.pagesize = val;
+    },
+    handleCurrentChange(val) {
+      console.log(`当前页: ${val}`);
+      this.pagenum = val;
+    },
+  },
+  mounted() {
+    this.getCategories({
+      type: this.type,
+      pagenum: this.pagenum,
+      pagesize: this.pagesize,
+    });
+  },
+  watch: {},
+  computed: {
+    //     //展开vuex的数组（数据）
+    ...goodsState(["categories", "total"]),
+  },
+};
+</script>
+
+<style scoped lang='scss'>
+</style>
